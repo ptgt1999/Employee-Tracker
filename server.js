@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const inquirer = require("inquirer");
 const express = require("express")
+const pg = require("pg")
 const {Pool} = require("pg");
 
 const app = express();
@@ -14,13 +15,10 @@ const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
     database: process.env.DB_DATABASE,
-    password: process.env.DB_PASS,
     port: process.env.DB_PORT,
 });
 
-console.log(`DB_PASS type: ${typeof process.env.DB_PASS}`);
-
-pool.query("SELECT NOW()", (error, results) => {
+pool.connect("SELECT NOW()", (error, results) => {
     if (error) {
         console.log("Error executing request");
     } else {
@@ -149,8 +147,8 @@ function addDepartment() {
         });
 }
 
-async function addRole() {
-    const { rows } = await pool.query("SELECT * FROM department");
+function addRole() {
+    const { rows } = pool.query("SELECT * FROM department");
     const departmentChoices = rows.map((department) => ({
         name: department.name,
         value: department.id,
@@ -233,7 +231,7 @@ async function addEmployee() {
 
             pool.query(pstgrsQuery, values, (error, results) => {
                 if (error) {
-                    console.log("Error executing request");
+                    console.error("Error executing query", error.message);
                 } else {
                     console.log(
                         `Employee added successfully ${qs.firstName} ${qs.lastName}`
@@ -276,7 +274,7 @@ async function updateEmployeeRole() {
 
             pool.query(pstgrsQuery, values, (error, results) => {
                 if (error) {
-                    console.log("Error executing request");
+                    console.error("Error executing query", error.message);
                 } else {
                     console.log("Employee role updated successfully");
                 }
