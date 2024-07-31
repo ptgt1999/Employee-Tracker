@@ -14,15 +14,15 @@ const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
     database: process.env.DB_DATABASE,
-    password: process.env.DB_PASSWORD,
+    password: process.env.DB_PASS,
     port: process.env.DB_PORT,
 });
 
-console.log(`DB_PASSWORD type: ${typeof process.env.DB_PASSWORD}`);
+console.log(`DB_PASS type: ${typeof process.env.DB_PASS}`);
 
-pool.request("SELECT NOW()", (error, results) => {
+pool.query("SELECT NOW()", (error, results) => {
     if (error) {
-        console.log("Error executing request: ");
+        console.log("Error executing request");
     } else {
         console.log("Database connected successfully");
     }
@@ -67,7 +67,7 @@ function menuOptions() {
 };
 
 function departmentsView() {
-    pool.request("SELECT * FROM department", (error, results) => {
+    pool.query("SELECT * FROM department", (error, results) => {
         if (error) {
             console.log("Error executing request");
         } else {
@@ -78,7 +78,7 @@ function departmentsView() {
 }
 
 function rolesView() {
-    const request = `
+    const query = `
         SELECT
             r.id,
             r.title,
@@ -89,7 +89,7 @@ function rolesView() {
         JOIN
             department d ON r.department_id = d.id;
             `;
-    pool.request(request, (error, results) => {
+    pool.query(query, (error, results) => {
         if (error) {
             console.log("Error executing request");
         } else {
@@ -100,7 +100,7 @@ function rolesView() {
 }
 
 function employeesView() {
-    const request = `
+    const query = `
         SELECT
             e.id,
             e.first_name,
@@ -116,7 +116,7 @@ function employeesView() {
         LEFT JOIN
             department d ON r.department_id = d.id
             `;
-    pool.request(request, (error, results) => {
+    pool.query(query, (error, results) => {
         if (error) {
             console.log("Error executing request");
         } else {
@@ -134,7 +134,7 @@ function addDepartment() {
             message: "Enter the department name:",
         })
         .then((qs) => {
-            pool.request(
+            pool.query(
                 "INSERT INTO department (name) VALUES ($1)",
                 [qs.name],
                 (error, results) => {
@@ -150,7 +150,7 @@ function addDepartment() {
 }
 
 async function addRole() {
-    const { rows } = await pool.request("SELECT * FROM department");
+    const { rows } = await pool.query("SELECT * FROM department");
     const departmentChoices = rows.map((department) => ({
         name: department.name,
         value: department.id,
@@ -175,11 +175,11 @@ async function addRole() {
             },
         ])
         .then((qs) => {
-            const pstgrsrequest =
+            const pstgrsQuery =
                 "INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)";
             const values = [qs.title, qs.salary, qs.department_id];
 
-            pool.request(pstgrsrequest, values, (error, results) => {
+            pool.query(pstgrsQuery, values, (error, results) => {
                 if (error) {
                     console.log("Error executing request");
                 } else {
@@ -191,8 +191,8 @@ async function addRole() {
 }
 
 async function addEmployee() {
-    const { rows: roles } = await pool.request("SELECT * FROM role");
-    const { rows: managers } = await pool.request("SELECT * FROM employee");
+    const { rows: roles } = await pool.query("SELECT * FROM role");
+    const { rows: managers } = await pool.query("SELECT * FROM employee");
     const roleChoices = roles.map((role) => ({
         name: role.title,
         value: role.id,
@@ -227,11 +227,11 @@ async function addEmployee() {
             },
         ])
         .then((qs) => {
-            const pstgrsrequest =
+            const pstgrsQuery =
                 "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)";
             const values = [qs.firstName, qs.lastName, qs.role, qs.manager];
 
-            pool.request(pstgrsrequest, values, (error, results) => {
+            pool.query(pstgrsQuery, values, (error, results) => {
                 if (error) {
                     console.log("Error executing request");
                 } else {
@@ -245,8 +245,8 @@ async function addEmployee() {
 }
 
 async function updateEmployeeRole() {
-    const { rows: roles } = await pool.request("SELECT * FROM role");
-    const { rows: employees } = await pool.request("SELECT * FROM employee");
+    const { rows: roles } = await pool.query("SELECT * FROM role");
+    const { rows: employees } = await pool.query("SELECT * FROM employee");
     const roleChoices = roles.map((role) => ({
         name: role.title,
         value: role.id,
@@ -271,10 +271,10 @@ async function updateEmployeeRole() {
             },
         ])
         .then((qs) => {
-            const pstgrsrequest = "UPDATE employee SET role_id = $1 WHERE id = $2";
+            const pstgrsQuery = "UPDATE employee SET role_id = $1 WHERE id = $2";
             const values = [qs.role, qs.employee];
 
-            pool.request(pstgrsrequest, values, (error, results) => {
+            pool.query(pstgrsQuery, values, (error, results) => {
                 if (error) {
                     console.log("Error executing request");
                 } else {
